@@ -1,27 +1,22 @@
 # Library Management System - Procedural Style
 
 class Book:
-    """Represents a book in the library."""
-    
     def __init__(self, book_id, title, author, total_copies):
         self.title = title
         self.author = author
         self.total_copies = total_copies
         self.id = book_id
         self.available_copies = total_copies
-
     def borrow(self):
         if self.available_copies > 0:
             self.available_copies -= 1
             return True
         return False
-
     def return_copy(self):
         if self.available_copies < self.total_copies:
             self.available_copies += 1
             return True
         return False
-
     def __str__(self):
         return f"{self.title} by {self.author} - {self.available_copies}/{self.total_copies} available"
     
@@ -53,7 +48,77 @@ class Member:
             print(f"{self.name} returned '{book.title}'")
             return True
         return False
+    
+class Library:
+    def __init__(self):
+        self.members = []
+        self.books = []
+        self.borrowed_books = []
+    def add_book(self, copies, title, author, book_id):
+        book = Book(copies, title, author, book_id)
+        self.books.append(book)
+        print(f"'{title}' added")
+    def add_member(self, member_id, name, email):
+        member = Member(member_id, name, email)
+        self.members.append(member)
+        print(f"'{name}' added")
 
+    def find_book(self, book_id):
+        return next((b for b in self.books if b.id == book_id), None)
+
+    def find_member(self, member_id):
+        return next((m for m in self.members if m.id == member_id), None)
+    def borrow_book(self, member_id, book_id):
+        member = self.find_member(member_id)
+        book = self.find_book(book_id)
+        if not member or not book:
+            print("Error: Invalid")
+            return
+        if member.borrow_book(book):
+            self.borrowed_books.append({
+                'member_id': member.id,
+                'book_id': book.id,
+                'member_name': member.name,
+                'book_title': book.title
+            })
+    def return_book(self, member_id, book_id):
+        member = self.find_member(member_id)
+        book = self.find_book(book_id)
+        if not member or not book:
+            print("Error: Invalid")
+            return
+        if member.return_book(book):
+            self.borrowed_books = [t for t in self.borrowed_books if not (t['member_id'] == member_id and t['book_id'] == book_id)]
+
+    def display_available_books(self):
+        print("\nAvailable Books")
+        for book in self.books:
+            if book.available_copies > 0:
+                print(book)
+
+    def display_member_books(self, member_id):
+        member = self.find_member(member_id)
+        if not member:
+            print("Error: Invalid")
+            return
+        print(f"\nBooks borrowed by {member.name}")
+        if not member.borrowed_books:
+            print("No books currently borrow")
+        else:
+            for book_id in member.borrowed_books:
+                book = self.find_book(book_id)
+                print(f"{book.title} by {book.author}")
+
+library = Library()
+
+def add_book(*args, **kwargs): return library.add_book(*args, **kwargs)
+def add_member(*args, **kwargs): return library.add_member(*args, **kwargs)
+def borrow_book(*args, **kwargs): return library.borrow_book(*args, **kwargs)
+def return_book(*args, **kwargs): return library.return_book(*args, **kwargs)
+def display_available_books(*args, **kwargs): return library.display_available_books(*args, **kwargs)
+def display_member_books(*args, **kwargs): return library.display_member_books(*args, **kwargs)
+def find_book(*args, **kwargs): return library.find_book(*args, **kwargs)
+def find_member(*args, **kwargs): return library.find_member(*args, **kwargs)
 
 # Test Code for Procedural Library System
 def test_library_system():
