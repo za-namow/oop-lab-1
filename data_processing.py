@@ -4,21 +4,19 @@ class Book:
     """Represents a book in the library."""
     
     def __init__(self, book_id, title, author, total_copies):
-        self.id = book_id
         self.title = title
         self.author = author
         self.total_copies = total_copies
+        self.id = book_id
         self.available_copies = total_copies
 
     def borrow(self):
-        """Decrease available copies if any remain"""
         if self.available_copies > 0:
             self.available_copies -= 1
             return True
         return False
 
     def return_copy(self):
-        """Increase available copies if below total"""
         if self.available_copies < self.total_copies:
             self.available_copies += 1
             return True
@@ -26,6 +24,36 @@ class Book:
 
     def __str__(self):
         return f"{self.title} by {self.author} - {self.available_copies}/{self.total_copies} available"
+    
+class Member:
+
+    def __init__(self, member_id, name, email):
+        self.borrowed_books = []
+        self.id = member_id
+        self.name = name
+        self.email = email
+    def __str__(self):
+        return f"{self.name} ({self.email})"
+    def borrow_book(self, book):
+        if len(self.borrowed_books) > 2:
+            print(f"Error: {self.name} has reached the limit")
+            return False
+        if book.borrow():
+            self.borrowed_books.append(book.id)
+            print(f"{self.name} borrowed '{book.title}'")
+            return True
+        print(f"Error: No copy for '{book.title}'")
+        return False
+    def return_book(self, book):
+        if book.id not in self.borrowed_books:
+            print(f"Error: {self.name} hasn't borrow '{book.title}'")
+            return False
+        if book.return_copy():
+            self.borrowed_books.remove(book.id)
+            print(f"{self.name} returned '{book.title}'")
+            return True
+        return False
+
 
 # Test Code for Procedural Library System
 def test_library_system():
