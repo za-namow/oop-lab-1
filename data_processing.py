@@ -1,116 +1,74 @@
-import csv, os
-from pathlib import Path
+import turtle
+import random
 
-class DataLoader:
-    """Handles loading CSV data files."""
-    
-    def __init__(self, base_path=None):
-        """Initialize the DataLoader with a base path for data files.
-        """
-        if base_path is None:
-            self.base_path = Path(__file__).parent.resolve()
+def draw_polygon(num_sides, size, orientation, location, color, border_size):
+    turtle.penup()
+    turtle.goto(location[0], location[1])
+    turtle.setheading(orientation)
+    turtle.color(color)
+    turtle.pensize(border_size)
+    turtle.pendown()
+    for _ in range(num_sides):
+        turtle.forward(size)
+        turtle.left(360/num_sides)
+    turtle.penup()
+
+def get_new_color():
+    return (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+def random_location(spread=300, vertical=200, similar=False):
+    if similar:
+        x = random.randint(-spread//4, spread//4)
+        y = random.randint(-vertical//4, vertical//4)
+    else:
+        x = random.randint(-spread, spread)
+        y = random.randint(-vertical, vertical)
+    return [x, y]
+
+def draw_pattern(pattern, count=20):
+    turtle.speed(0)
+    turtle.bgcolor('black')
+    turtle.tracer(0)
+    turtle.colormode(255)
+
+    for _ in range(count):
+        if pattern == 1:  # all triangles
+            num_sides = 3
+            loc_similar = False
+        elif pattern == 2:  # all rectangles
+            num_sides = 4
+            loc_similar = False
+        elif pattern == 3:  # all pentagons
+            num_sides = 5
+            loc_similar = False
+        elif pattern == 4:  # triangles, rectangles, pentagons random
+            num_sides = random.randint(3,5)
+            loc_similar = False
+        elif pattern in [5,6,7]:  # many polygons in similar spots
+            if pattern == 5:
+                num_sides = 3
+            elif pattern == 6:
+                num_sides = 4
+            else:
+                num_sides = 5
+            loc_similar = True
+        elif pattern in [8,9]:  # mix in similar spots
+            num_sides = random.randint(3,5)
+            loc_similar = True
         else:
-            self.base_path = Path(base_path)
-    
-    def load_csv(self, filename):
-        """Load a CSV file and return its contents as a list of dictionaries.
-        """
-        filepath = self.base_path / filename
-        data = []
-        
-        with filepath.open() as f:
-            rows = csv.DictReader(f)
-            for row in rows:
-                data.append(dict(row))
-        
-        return data
+            print("Invalid pattern. Choose 1-9.")
+            return
 
-class DB:
-    def __init__(self):
-        self.tables = {}
+        size = random.randint(50, 150)
+        orientation = random.randint(0, 90)
+        location = random_location(similar=loc_similar)
+        color = get_new_color()
+        border_size = random.randint(1, 10)
+        draw_polygon(num_sides, size, orientation, location, color, border_size)
 
-    def insert(self, table):
-        self.tables[table.table_name] = table
+    turtle.update()
+    turtle.done()
 
-    def search(self, name):
-        return self.tables.get(name, None)
-
-
-class Table:
-    def __init__(self, table_name, table):
-        self.table_name = table_name
-        self.table = table
-
-    def filter(self, condition):
-        filtered = [row for row in self.table if condition(row)]
-        return Table(self.table_name + "_filtered", filtered)
-
-    def aggregate(self, func, column):
-        values_raw = [row[column] for row in self.table]
-
-        try:
-            values = [float(v) for v in values_raw]
-        except ValueError:
-            values = values_raw
-        return func(values)
-
-    def join(self, other_table, key):
-        joined = []
-        for i1 in self.table:
-            for i2 in other_table.table:
-                if i1[key] == i2[key]:
-                    joined.append({**i1, **i2})
-        return Table(self.table_name + "_joined", joined)
-
-    def __str__(self):
-        return self.table_name + ':' + str(self.table)
-
-    def __str__(self):
-        return self.table_name + ':' + str(self.table)
-
-loader = DataLoader()
-cities = loader.load_csv('Cities.csv')
-table1 = Table('cities', cities)
-countries = loader.load_csv('Countries.csv')
-table2 = Table('countries', countries)
-
-my_DB = DB()
-my_DB.insert(table1)
-my_DB.insert(table2)
-
-my_table1 = my_DB.search('cities')
-print("List all cities in Italy:") 
-my_table1_filtered = my_table1.filter(lambda x: x['country'] == 'Italy')
-print(my_table1_filtered)
-print()
-
-print("Average temperature for all cities in Italy:")
-print(my_table1_filtered.aggregate(lambda x: sum(x)/len(x), 'temperature'))
-print()
-
-my_table2 = my_DB.search('countries')
-print("List all non-EU countries:") 
-my_table2_filtered = my_table2.filter(lambda x: x['EU'] == 'no')
-print(my_table2_filtered)
-print()
-
-print("Number of countries that have coastline:")
-print(my_table2.filter(lambda x: x['coastline'] == 'yes').aggregate(lambda x: len(x), 'coastline'))
-print()
-
-my_table3 = my_table1.join(my_table2, 'country')
-print("First 5 entries of the joined table (cities and countries):")
-for item in my_table3.table[:5]:
-    print(item)
-print()
-
-print("Cities whose temperatures are below 5.0 in non-EU countries:")
-my_table3_filtered = my_table3.filter(lambda x: x['EU'] == 'no').filter(lambda x: float(x['temperature']) < 5.0)
-print(my_table3_filtered.table)
-print()
-
-print("The min and max temperatures for cities in EU countries that do not have coastlines")
-my_table3_filtered = my_table3.filter(lambda x: x['EU'] == 'yes').filter(lambda x: x['coastline'] == 'no')
-print("Min temp:", my_table3_filtered.aggregate(lambda x: min(x), 'temperature'))
-print("Max temp:", my_table3_filtered.aggregate(lambda x: max(x), 'temperature'))
-print()
+# Ask user for pattern
+pattern = int(input("Select pattern (1-9): "))
+draw_pattern(pattern)
